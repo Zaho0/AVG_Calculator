@@ -25,6 +25,179 @@
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  /* ── INTRO SPLASH ── */
+  #splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #050608;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  #splash::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 50%, rgba(255,77,109,0.08) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  /* scanlines */
+  #splash::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0,0,0,0.18) 3px,
+      rgba(0,0,0,0.18) 4px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .splash-emoji {
+    font-size: clamp(4rem, 12vw, 7rem);
+    animation: floatEmoji 2s ease-in-out infinite, splashIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+    animation-delay: 0s, 0.1s;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 30px rgba(255,100,50,0.5));
+  }
+
+  .splash-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 7vw, 4.5rem);
+    font-weight: 800;
+    color: #fff;
+    text-align: center;
+    line-height: 1.1;
+    position: relative;
+    z-index: 2;
+    animation: splashIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.25s both;
+    padding: 0 20px;
+  }
+
+  .splash-title .hell {
+    background: linear-gradient(135deg, #ff4d6d, #ff8c42);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+  }
+
+  .splash-title .hell::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #ff4d6d, #ff8c42);
+    border-radius: 10px;
+    box-shadow: 0 0 10px #ff4d6d;
+  }
+
+  .splash-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(0.7rem, 2vw, 0.95rem);
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    margin-top: 14px;
+    letter-spacing: 1.5px;
+    position: relative;
+    z-index: 2;
+    animation: splashIn 0.5s ease 0.45s both;
+    padding: 0 24px;
+  }
+
+  /* typing cursor line */
+  .splash-typing {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(0.75rem, 2vw, 1rem);
+    color: var(--accent);
+    margin-top: 36px;
+    position: relative;
+    z-index: 2;
+    min-height: 1.4em;
+    text-align: center;
+    animation: splashIn 0.4s ease 0.7s both;
+  }
+
+  .splash-typing::after {
+    content: '▋';
+    animation: blink 0.7s steps(1) infinite;
+    margin-left: 2px;
+  }
+
+  @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+  /* progress bar */
+  .splash-progress-wrap {
+    width: min(380px, 80vw);
+    margin-top: 28px;
+    position: relative;
+    z-index: 2;
+    animation: splashIn 0.4s ease 0.85s both;
+  }
+
+  .splash-progress-track {
+    height: 4px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .splash-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff4d6d, #ff8c42, #ffd166);
+    border-radius: 10px;
+    box-shadow: 0 0 12px rgba(255,77,109,0.5);
+    transition: width 0.15s ease;
+  }
+
+  .splash-progress-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.25);
+    margin-top: 8px;
+    text-align: right;
+    letter-spacing: 1px;
+  }
+
+  /* splash exit */
+  #splash.exit {
+    animation: splashExit 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+
+  @keyframes splashExit {
+    0%   { opacity:1; transform: scale(1); }
+    40%  { opacity:1; transform: scale(1.04); }
+    100% { opacity:0; transform: scale(0.96); pointer-events:none; }
+  }
+
+  @keyframes splashIn {
+    from { opacity:0; transform: translateY(18px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  @keyframes floatEmoji {
+    0%,100% { transform: translateY(0) rotate(-3deg); }
+    50%      { transform: translateY(-12px) rotate(3deg); }
+  }
+
+  /* hide main until splash done */
+  #mainContent { opacity: 0; transition: opacity 0.5s ease 0.1s; }
+  #mainContent.visible { opacity: 1; }
+
   body {
     background: var(--bg);
     color: var(--text);
@@ -612,7 +785,23 @@
 </head>
 <body>
 
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-emoji">🔥</div>
+  <div class="splash-title">Welcome to <span class="hell">Hell</span></div>
+  <div class="splash-sub">Also known as: your semester grades</div>
+  <div class="splash-typing" id="splashTyping"></div>
+  <div class="splash-progress-wrap">
+    <div class="splash-progress-track">
+      <div class="splash-progress-fill" id="splashBar"></div>
+    </div>
+    <div class="splash-progress-label" id="splashPct">0%</div>
+  </div>
+</div>
+
+<div id="mainContent">
 <div class="container">
+
   <header>
     <div class="header-badge">Semester Tool</div>
     <h1>Grade <span>Calculator</span></h1>
@@ -903,6 +1092,70 @@ function reset() {
 }
 
 buildCards();
+
+// ── SPLASH LOGIC ──
+(function() {
+  const lines = [
+    'Calculating your academic suffering...',
+    'Loading existential dread... ✓',
+    'Importing caffeine dependencies...',
+    'Compiling your sleep debt...',
+    'Parsing professor expectations... ERROR 404',
+    'Overriding will to live... ✓',
+    'Almost ready to ruin your day...',
+  ];
+
+  const typingEl = document.getElementById('splashTyping');
+  const bar      = document.getElementById('splashBar');
+  const pctEl    = document.getElementById('splashPct');
+  const splash   = document.getElementById('splash');
+  const main     = document.getElementById('mainContent');
+
+  let lineIdx = 0;
+  let charIdx = 0;
+  let progress = 0;
+  const totalDuration = 3400; // ms total splash time
+  const startTime = performance.now();
+
+  // Progress bar animation
+  function updateBar(now) {
+    const elapsed = now - startTime;
+    progress = Math.min((elapsed / totalDuration) * 100, 100);
+    bar.style.width = progress + '%';
+    pctEl.textContent = Math.round(progress) + '%';
+    if (progress < 100) requestAnimationFrame(updateBar);
+  }
+  requestAnimationFrame(updateBar);
+
+  // Typing effect cycling through lines
+  function typeNextChar() {
+    if (lineIdx >= lines.length) return;
+    const line = lines[lineIdx];
+    if (charIdx <= line.length) {
+      typingEl.textContent = line.slice(0, charIdx);
+      charIdx++;
+      setTimeout(typeNextChar, 38);
+    } else {
+      // pause then clear and go to next line
+      setTimeout(() => {
+        charIdx = 0;
+        lineIdx++;
+        if (lineIdx < lines.length) typeNextChar();
+      }, 420);
+    }
+  }
+  setTimeout(typeNextChar, 900);
+
+  // Dismiss after totalDuration
+  setTimeout(() => {
+    splash.classList.add('exit');
+    setTimeout(() => {
+      splash.style.display = 'none';
+      main.classList.add('visible');
+    }, 700);
+  }, totalDuration);
+})();
 </script>
+</div><!-- /mainContent -->
 </body>
 </html>
