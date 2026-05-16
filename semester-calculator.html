@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Semester Average Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #090b10;
+    --surface: #0f1219;
+    --surface2: #161b26;
+    --border: rgba(255,255,255,0.07);
+    --accent: #00f5c4;
+    --accent2: #7c6aff;
+    --accent3: #ff6b6b;
+    --gold: #ffd166;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --green: #00f5a0;
+    --red: #ff4d6d;
+    --radius: 18px;
+    --glow: 0 0 40px rgba(0,245,196,0.15);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 10%, rgba(124,106,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 90% 80%, rgba(0,245,196,0.06) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255,107,107,0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Grid overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,245,196,0.08);
+    border: 1px solid rgba(0,245,196,0.2);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .header-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  h1 {
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 800;
+    line-height: 1.05;
+    background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  h1 span {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  /* Modules grid */
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    transition: border-color 0.3s, transform 0.2s, box-shadow 0.3s;
+    animation: fadeUp 0.5s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .module-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .module-card:hover {
+    border-color: rgba(0,245,196,0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+
+  .module-card:hover::before { opacity: 1; }
+
+  .module-card:nth-child(1) { animation-delay: 0.05s; }
+  .module-card:nth-child(2) { animation-delay: 0.10s; }
+  .module-card:nth-child(3) { animation-delay: 0.15s; }
+  .module-card:nth-child(4) { animation-delay: 0.20s; }
+  .module-card:nth-child(5) { animation-delay: 0.25s; }
+  .module-card:nth-child(6) { animation-delay: 0.30s; }
+  .module-card:nth-child(7) { animation-delay: 0.35s; }
+
+  .module-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .module-name {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .module-meta {
+    display: flex;
+    gap: 6px;
+  }
+
+  .tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 100px;
+    font-weight: 700;
+  }
+
+  .tag-coef {
+    background: rgba(124,106,255,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(124,106,255,0.25);
+  }
+
+  .tag-avg {
+    background: rgba(0,245,196,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(0,245,196,0.2);
+    min-width: 48px;
+    text-align: center;
+    font-size: 11px;
+    transition: all 0.3s;
+  }
+
+  .tag-avg.valid { background: rgba(0,245,160,0.15); color: var(--green); border-color: rgba(0,245,160,0.3); }
+  .tag-avg.invalid { background: rgba(255,77,109,0.12); color: var(--red); border-color: rgba(255,77,109,0.25); }
+
+  .fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .field-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    width: 38px;
+    flex-shrink: 0;
+  }
+
+  .field-weight {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    width: 34px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .field input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    -moz-appearance: textfield;
+  }
+
+  .field input::-webkit-outer-spin-button,
+  .field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .field input:focus {
+    border-color: rgba(0,245,196,0.4);
+    box-shadow: 0 0 0 3px rgba(0,245,196,0.07);
+  }
+
+  .field input.has-value { border-color: rgba(0,245,196,0.2); }
+  .field input.error-field { border-color: rgba(255,77,109,0.4) !important; }
+
+  .field input:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 24px;
+  }
+
+  .divider-line { flex: 1; height: 1px; background: var(--border); }
+
+  .divider span {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  /* Calculate button */
+  .calc-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border: none;
+    border-radius: var(--radius);
+    color: #090b10;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.3s, opacity 0.2s;
+    box-shadow: 0 4px 30px rgba(0,245,196,0.2);
+    margin-bottom: 32px;
+    text-transform: uppercase;
+  }
+
+  .calc-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 40px rgba(0,245,196,0.35);
+  }
+
+  .calc-btn:active { transform: translateY(0); }
+
+  .btn-icon {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s;
+  }
+
+  .calc-btn:hover .btn-icon { transform: rotate(90deg); }
+
+  /* Results panel */
+  .results-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    display: none;
+    animation: fadeUp 0.5s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .results-panel.show { display: block; }
+
+  .results-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .results-title {
+    font-size: 0.75rem;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  /* Big average display */
+  .avg-display {
+    text-align: center;
+    margin-bottom: 36px;
+    padding: 32px;
+    border-radius: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s ease;
+  }
+
+  .avg-display.valid-bg {
+    border-color: rgba(0,245,160,0.2);
+    background: rgba(0,245,160,0.04);
+    box-shadow: 0 0 60px rgba(0,245,160,0.08);
+  }
+
+  .avg-display.invalid-bg {
+    border-color: rgba(255,77,109,0.2);
+    background: rgba(255,77,109,0.04);
+    box-shadow: 0 0 60px rgba(255,77,109,0.08);
+  }
+
+  .avg-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .avg-number {
+    font-size: clamp(3.5rem, 10vw, 6rem);
+    font-weight: 800;
+    line-height: 1;
+    transition: color 0.5s;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .avg-number.valid-color { color: var(--green); text-shadow: 0 0 40px rgba(0,245,160,0.5); }
+  .avg-number.invalid-color { color: var(--red); text-shadow: 0 0 40px rgba(255,77,109,0.4); }
+
+  .avg-denom {
+    font-size: 1.5rem;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .verdict {
+    margin-top: 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 8px 20px;
+    border-radius: 100px;
+    display: inline-block;
+    transition: all 0.5s;
+  }
+
+  .verdict.pass {
+    background: rgba(0,245,160,0.12);
+    color: var(--green);
+    border: 1px solid rgba(0,245,160,0.3);
+  }
+
+  .verdict.fail {
+    background: rgba(255,77,109,0.12);
+    color: var(--red);
+    border: 1px solid rgba(255,77,109,0.25);
+  }
+
+  /* Module results breakdown */
+  .breakdown-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .breakdown-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: border-color 0.3s;
+  }
+
+  .breakdown-row:hover { border-color: var(--border); }
+
+  .br-name {
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex: 1;
+  }
+
+  .br-coef {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .br-bar-wrap {
+    width: 100px;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .br-bar {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width: 0;
+  }
+
+  .br-bar.valid { background: linear-gradient(90deg, var(--green), var(--accent)); }
+  .br-bar.invalid { background: linear-gradient(90deg, var(--red), #ff8a65); }
+
+  .br-score {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    width: 38px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .br-score.valid { color: var(--green); }
+  .br-score.invalid { color: var(--red); }
+
+  .br-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .br-dot.valid { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .br-dot.invalid { background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+  /* Reset */
+  .reset-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 16px;
+  }
+
+  .reset-btn:hover { border-color: rgba(255,77,109,0.3); color: var(--red); }
+
+  /* Confetti particles */
+  .particle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 999;
+    border-radius: 2px;
+    animation: confettiFall linear both;
+  }
+
+  /* Tooltip */
+  .error-msg {
+    color: var(--red);
+    font-size: 0.75rem;
+    font-family: 'Space Mono', monospace;
+    margin-top: 8px;
+    display: none;
+    padding: 8px 12px;
+    background: rgba(255,77,109,0.08);
+    border-radius: 8px;
+    border: 1px solid rgba(255,77,109,0.2);
+    animation: shake 0.3s ease;
+  }
+
+  .error-msg.show { display: block; }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  @keyframes countUp {
+    from { opacity: 0; transform: scale(0.7); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .avg-number { animation: countUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+  @media (max-width: 600px) {
+    .modules-grid { grid-template-columns: 1fr; }
+    .br-bar-wrap { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-badge">Semester Tool</div>
+    <h1>Grade <span>Calculator</span></h1>
+    <p class="subtitle">Enter your scores — we'll handle the math.</p>
+  </header>
+
+  <div class="modules-grid" id="modulesGrid"></div>
+
+  <div class="divider"><div class="divider-line"></div><span>Ready?</span><div class="divider-line"></div></div>
+
+  <button class="calc-btn" onclick="calculate()">
+    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M9 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-3"/>
+      <path d="M9 15h3l8.5-8.5a1.5 1.5 0 0 0-3-3L9 12v3"/>
+    </svg>
+    Calculate Semester Average
+  </button>
+
+  <div class="results-panel" id="results">
+    <div class="results-title">— Your Results —</div>
+
+    <div class="avg-display" id="avgDisplay">
+      <div class="avg-label">Semester Average</div>
+      <div class="avg-number" id="avgNumber">—</div>
+      <div id="verdictBox"></div>
+    </div>
+
+    <div class="breakdown-title">Module Breakdown</div>
+    <div class="breakdown-list" id="breakdownList"></div>
+
+    <button class="reset-btn" onclick="reset()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+      </svg>
+      Reset All Fields
+    </button>
+  </div>
+</div>
+
+<script>
+const MODULES = [
+  { id: 'krr',  name: 'KRR',  coef: 3, exam: 0.50, td: 0.25, tp: 0.25 },
+  { id: 'lia',  name: 'LIA',  coef: 3, exam: 0.50, td: 0.25, tp: 0.25 },
+  { id: 'ccbd', name: 'CCBD', coef: 2, exam: 0.50, td: 0,    tp: 0.50 },
+  { id: 'meps', name: 'MEPS', coef: 2, exam: 0.67, td: 0,    tp: 0.33 },
+  { id: 'ad',   name: 'AD',   coef: 2, exam: 0.67, td: 0,    tp: 0.33 },
+  { id: 'co',   name: 'CO',   coef: 2, exam: 0.50, td: 0.25, tp: 0.25 },
+  { id: 'mr',   name: 'MR',   coef: 1, exam: 1.00, td: 0,    tp: 0    },
+];
+
+function pct(v) {
+  if (v === 0) return null;
+  return Math.round(v * 100) + '%';
+}
+
+function buildCards() {
+  const grid = document.getElementById('modulesGrid');
+  MODULES.forEach((m, i) => {
+    const card = document.createElement('div');
+    card.className = 'module-card';
+    card.style.animationDelay = (i * 0.06) + 's';
+
+    const fields = [
+      { key: 'exam', label: 'EXAM', weight: pct(m.exam), disabled: m.exam === 0 },
+      { key: 'td',   label: 'TD',   weight: pct(m.td),   disabled: m.td === 0   },
+      { key: 'tp',   label: 'TP',   weight: pct(m.tp),   disabled: m.tp === 0   },
+    ].filter(f => f.weight !== null || !f.disabled);
+
+    const fieldsHtml = fields.map(f => `
+      <div class="field">
+        <span class="field-label">${f.label}</span>
+        <input type="number" id="${m.id}_${f.key}" min="0" max="20" step="0.25"
+          placeholder="—" ${f.disabled ? 'disabled' : ''}
+          oninput="onInput(this,'${m.id}')"
+          ${f.disabled ? '' : ''}>
+        <span class="field-weight">${f.weight || ''}</span>
+      </div>
+    `).join('');
+
+    card.innerHTML = `
+      <div class="module-header">
+        <div class="module-name">${m.name}</div>
+        <div class="module-meta">
+          <span class="tag tag-coef">×${m.coef}</span>
+          <span class="tag tag-avg" id="${m.id}_tag">—</span>
+        </div>
+      </div>
+      <div class="fields">
+        ${fieldsHtml}
+      </div>
+      <div class="error-msg" id="${m.id}_err"></div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function getVal(id) {
+  const el = document.getElementById(id);
+  if (!el || el.disabled) return null;
+  const v = parseFloat(el.value);
+  return isNaN(v) ? null : v;
+}
+
+function calcModule(m) {
+  const exam = getVal(`${m.id}_exam`);
+  const td   = getVal(`${m.id}_td`);
+  const tp   = getVal(`${m.id}_tp`);
+
+  let score = 0, totalW = 0;
+
+  if (m.exam > 0) { if (exam === null) return null; score += exam * m.exam; totalW += m.exam; }
+  if (m.td   > 0) { if (td   === null) return null; score += td   * m.td;   totalW += m.td;   }
+  if (m.tp   > 0) { if (tp   === null) return null; score += tp   * m.tp;   totalW += m.tp;   }
+
+  return totalW > 0 ? score / totalW : null;
+}
+
+function onInput(el, moduleId) {
+  // Clamp
+  let v = parseFloat(el.value);
+  if (!isNaN(v)) {
+    if (v < 0) el.value = 0;
+    if (v > 20) el.value = 20;
+  }
+  el.classList.toggle('has-value', el.value !== '');
+  el.classList.remove('error-field');
+
+  const m = MODULES.find(x => x.id === moduleId);
+  const avg = calcModule(m);
+  const tag = document.getElementById(`${m.id}_tag`);
+
+  if (avg !== null) {
+    tag.textContent = avg.toFixed(2);
+    tag.className = 'tag tag-avg ' + (avg >= 10 ? 'valid' : 'invalid');
+  } else {
+    tag.textContent = '—';
+    tag.className = 'tag tag-avg';
+  }
+}
+
+function validate() {
+  let ok = true;
+  MODULES.forEach(m => {
+    const err = document.getElementById(`${m.id}_err`);
+    err.classList.remove('show');
+
+    ['exam','td','tp'].forEach(k => {
+      const el = document.getElementById(`${m.id}_${k}`);
+      if (el && !el.disabled) {
+        el.classList.remove('error-field');
+        const v = parseFloat(el.value);
+        if (el.value === '' || isNaN(v)) {
+          el.classList.add('error-field');
+          err.textContent = 'Please fill all fields for this module.';
+          err.classList.add('show');
+          ok = false;
+        }
+      }
+    });
+  });
+  return ok;
+}
+
+function calculate() {
+  if (!validate()) return;
+
+  let totalWeighted = 0, totalCoef = 0;
+  const breakdown = [];
+
+  MODULES.forEach(m => {
+    const avg = calcModule(m);
+    totalWeighted += avg * m.coef;
+    totalCoef += m.coef;
+    breakdown.push({ m, avg });
+  });
+
+  const semAvg = totalWeighted / totalCoef;
+  const isValid = semAvg >= 10;
+
+  // Show results
+  const panel = document.getElementById('results');
+  panel.classList.add('show');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const display = document.getElementById('avgDisplay');
+  const numEl = document.getElementById('avgNumber');
+  const verdictBox = document.getElementById('verdictBox');
+
+  display.className = 'avg-display ' + (isValid ? 'valid-bg' : 'invalid-bg');
+
+  // Animate number
+  numEl.className = 'avg-number ' + (isValid ? 'valid-color' : 'invalid-color');
+  numEl.style.animation = 'none';
+  void numEl.offsetWidth;
+  numEl.style.animation = '';
+
+  animateNumber(numEl, semAvg);
+
+  verdictBox.innerHTML = `<div class="verdict ${isValid ? 'pass' : 'fail'}">
+    ${isValid ? '✓ Semester Validated' : '✗ Semester Not Validated'}
+  </div>`;
+
+  // Breakdown
+  const list = document.getElementById('breakdownList');
+  list.innerHTML = '';
+  breakdown.forEach(({ m, avg }, i) => {
+    const valid = avg >= 10;
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.style.animationDelay = (i * 0.05) + 's';
+    row.innerHTML = `
+      <div class="br-dot ${valid ? 'valid' : 'invalid'}"></div>
+      <div class="br-name">${m.name}</div>
+      <div class="br-coef">×${m.coef}</div>
+      <div class="br-bar-wrap"><div class="br-bar ${valid ? 'valid' : 'invalid'}" id="bar_${m.id}"></div></div>
+      <div class="br-score ${valid ? 'valid' : 'invalid'}">${avg.toFixed(2)}</div>
+    `;
+    list.appendChild(row);
+
+    // Animate bars
+    setTimeout(() => {
+      const bar = document.getElementById(`bar_${m.id}`);
+      if (bar) bar.style.width = ((avg / 20) * 100) + '%';
+    }, 100 + i * 60);
+  });
+
+  if (isValid) launchConfetti();
+}
+
+function animateNumber(el, target) {
+  const duration = 800;
+  const start = performance.now();
+  const startVal = 0;
+
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = startVal + (target - startVal) * eased;
+    el.textContent = current.toFixed(2);
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = target.toFixed(2);
+  }
+  requestAnimationFrame(step);
+}
+
+function launchConfetti() {
+  const colors = ['#00f5c4', '#7c6aff', '#ffd166', '#ff6b6b', '#fff', '#00f5a0'];
+  for (let i = 0; i < 90; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.cssText = `
+        left: ${Math.random() * 100}vw;
+        top: -10px;
+        width: ${4 + Math.random() * 6}px;
+        height: ${4 + Math.random() * 6}px;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        animation-duration: ${1.5 + Math.random() * 2}s;
+        animation-delay: ${Math.random() * 0.5}s;
+        opacity: 0.9;
+        border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+      `;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 4000);
+    }, i * 20);
+  }
+}
+
+function reset() {
+  MODULES.forEach(m => {
+    ['exam','td','tp'].forEach(k => {
+      const el = document.getElementById(`${m.id}_${k}`);
+      if (el && !el.disabled) {
+        el.value = '';
+        el.classList.remove('has-value','error-field');
+      }
+    });
+    const err = document.getElementById(`${m.id}_err`);
+    if (err) err.classList.remove('show');
+    const tag = document.getElementById(`${m.id}_tag`);
+    if (tag) { tag.textContent = '—'; tag.className = 'tag tag-avg'; }
+  });
+
+  const panel = document.getElementById('results');
+  panel.classList.remove('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+buildCards();
+</script>
+</body>
+</html>
